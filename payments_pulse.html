@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payments Pulse</title>
+<script src="https://res.cdn.office.net/teams-js/2.22.0/js/MicrosoftTeams.min.js"></script>
+<style>
+:root{
+  --bg:#F0F5FA;--card:#fff;--navy:#0B1F3A;--navy2:#132A4E;--navy3:#1A3660;
+  --teal:#007A6E;--teal-l:#E6F4F2;--teal-m:#A8D8D4;--teal-d:#005A52;
+  --gold:#B85C0A;--gold-l:#FDF0E6;--gold-d:#8F4508;
+  --purple:#5B3FA0;--purple-l:#EEE9FA;
+  --green:#1A7A50;--green-l:#E6F4EE;
+  --red:#C0303F;--red-l:#FDEAEC;
+  --muted:#5C6E82;--muted2:#8FA3B8;
+  --border:#CBD5E1;--border2:#E2EAF2;
+  --text:#0B1F3A;--text2:#243347;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
+.screen{display:none;height:100vh;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+
+/* TOPBAR */
+.topbar{background:var(--navy);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-brand{font-size:11px;font-weight:800;letter-spacing:.09em;color:#5BC8C0;text-transform:uppercase}
+.tb-right{font-size:11px;color:#7B9AB5;display:flex;align-items:center;gap:10px}
+.tb-user{color:#C8D8E8;font-weight:700;font-size:12px}
+
+/* SCROLLABLE BODY */
+.body{flex:1;overflow-y:auto;padding:20px 18px 52px}
+.inner{max-width:640px;margin:0 auto}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 22px;border-radius:9px;border:none;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
+.btn:active{transform:scale(.98)}
+.btn-p{background:var(--teal);color:#fff}.btn-p:hover{background:var(--teal-d)}
+.btn-o{background:transparent;color:var(--teal);border:2px solid var(--teal)}.btn-o:hover{background:var(--teal-l)}
+.btn-g{background:#EEF2F7;color:var(--muted);border:1px solid var(--border)}.btn-g:hover{background:var(--border);color:var(--text)}
+.btn-f{width:100%}.btn-sm{padding:6px 13px;font-size:11.5px;border-radius:7px}
+.fi,.fs{width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid var(--border);font-size:14px;background:var(--bg);color:var(--text);outline:none;transition:border-color .15s;font-family:inherit}
+.fi:focus,.fs:focus{border-color:var(--teal);background:#fff}
+.fl{display:block;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.chip{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.ct{background:var(--teal-l);color:var(--teal);border:1px solid var(--teal-m)}
+.cg{background:var(--gold-l);color:var(--gold);border:1px solid #EDB98A}
+.cp{background:var(--purple-l);color:var(--purple);border:1px solid #C5B4F0}
+.cv{background:var(--green-l);color:var(--green);border:1px solid #9ACFB8}
+
+/* TOPIC SELECT */
+.tc{border-radius:14px;padding:18px 20px;cursor:pointer;border:1.5px solid var(--border2);background:#fff;transition:all .18s;margin-bottom:10px;box-shadow:0 1px 6px rgba(11,31,58,.04)}
+.tc:hover{transform:translateY(-2px);box-shadow:0 5px 18px rgba(11,31,58,.09);border-color:var(--teal)}
+.tc.done{border-color:var(--green);background:var(--green-l)}
+
+/* ═══ LEARN CARD VIEWER ═══ */
+.lv{display:flex;flex-direction:column;height:100%}
+.lv-steps{display:flex;align-items:center;gap:8px;padding:12px 20px 0;flex-shrink:0;max-width:640px;margin:0 auto;width:100%}
+.lv-step{display:flex;align-items:center;gap:6px;cursor:pointer;opacity:.45;transition:opacity .2s}
+.lv-step.done{opacity:.7}.lv-step.active{opacity:1}
+.lv-step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .2s;flex-shrink:0}
+.lv-step.done .lv-step-dot{background:var(--teal)}
+.lv-step.active .lv-step-dot{background:var(--teal);box-shadow:0 0 0 3px var(--teal-l)}
+.lv-step-lbl{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+.lv-step.active .lv-step-lbl{color:var(--teal)}
+.lv-sep{flex:1;height:1px;background:var(--border2);margin:0 2px}
+.lv-area{flex:1;overflow-y:auto;padding:14px 18px 10px}
+.lv-inner{max-width:640px;margin:0 auto}
+.lv-nav{display:flex;gap:10px;padding:10px 18px 14px;flex-shrink:0;max-width:640px;margin:0 auto;width:100%;border-top:1px solid var(--border2);background:var(--bg)}
+
+/* ═══ LEARN CARD DESIGNS ═══ */
+.lcard{border-radius:16px;overflow:hidden;border:1px solid var(--border2);box-shadow:0 2px 14px rgba(11,31,58,.07);animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+
+/* Hero stat banner */
+.lc-hero{padding:30px 24px 24px;position:relative;overflow:hidden;text-align:center}
+.lc-hero::after{content:'';position:absolute;bottom:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.05)}
+.lc-hero-eyebrow{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;opacity:.7}
+.lc-hero-num{font-size:56px;font-weight:900;line-height:1;margin-bottom:4px;letter-spacing:-.02em}
+.lc-hero-sub{font-size:13px;line-height:1.55;opacity:.82;max-width:280px;margin:0 auto}
+
+/* Card body */
+.lc-body{padding:20px 22px;background:#fff}
+.lc-section-title{font-size:16px;font-weight:900;color:var(--navy);margin-bottom:12px;line-height:1.35}
+.lc-prose{font-size:13.5px;color:var(--text2);line-height:1.78}
+.lc-prose strong{color:var(--navy);font-weight:700}
+.lc-prose .hl{background:var(--teal-l);padding:1px 4px;border-radius:3px;color:var(--teal-d);font-weight:700;font-size:13px}
+
+/* Stat row */
+.lc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border2);border-bottom:1px solid var(--border2)}
+.lcs{padding:14px 10px;text-align:center;border-right:1px solid var(--border2)}
+.lcs:last-child{border-right:none}
+.lcs-n{font-size:20px;font-weight:900;line-height:1.1;color:var(--navy)}
+.lcs-n.t{color:var(--teal)}.lcs-n.g{color:var(--gold)}.lcs-n.p{color:var(--purple)}.lcs-n.r{color:var(--red)}
+.lcs-l{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.3}
+
+/* Pull quote */
+.lc-quote{margin:0 22px;padding:14px 18px;border-radius:10px;position:relative}
+.lc-quote::before{content:'\201C';position:absolute;top:-4px;left:14px;font-size:36px;color:currentColor;opacity:.2;font-family:Georgia,serif;line-height:1}
+.lc-quote-text{font-size:13.5px;font-style:italic;line-height:1.65;padding-left:4px}
+.lc-quote-attr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:7px;opacity:.7}
+
+/* Tension box */
+.lc-tension{margin:0 22px;padding:13px 16px;border-radius:10px;background:var(--bg);border:1px solid var(--border2)}
+.lc-tension-lbl{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
+.lc-tension-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:7px;font-size:13px;color:var(--text2);line-height:1.5}
+.lc-tension-row:last-child{margin-bottom:0}
+.lc-tension-row .ico{flex-shrink:0;font-size:14px;margin-top:1px}
+
+/* Callout */
+.lc-callout{margin:0 22px;padding:13px 16px;border-radius:10px;border-left:3px solid}
+.lc-callout-lbl{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.lc-callout-txt{font-size:13px;color:var(--text2);line-height:1.6}
+.lc-callout-txt strong{color:var(--navy)}
+
+/* Read link */
+.lc-link{display:flex;align-items:center;gap:11px;margin:14px 22px 20px;padding:11px 14px;border-radius:9px;background:var(--bg);border:1px solid var(--border2);text-decoration:none;color:var(--text);transition:all .15s}
+.lc-link:hover{border-color:var(--teal);background:var(--teal-l)}
+.lc-link .lt{font-size:12.5px;font-weight:700;color:var(--navy)}
+.lc-link .ls{font-size:11px;color:var(--muted);margin-top:1px}
+.spacer14{height:14px}
+
+/* ═══ QUIZ ═══ */
+.qz-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
+.qz-bar-w{background:var(--border2);border-radius:5px;height:3px;margin-bottom:18px;overflow:hidden}
+.qz-bar{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--teal),#00A896);transition:width .4s cubic-bezier(.4,0,.2,1)}
+.qcard{background:#fff;border-radius:14px;border:1px solid var(--border2);overflow:hidden;box-shadow:0 1px 8px rgba(11,31,58,.05)}
+.qcard-hd{padding:16px 20px 14px;border-bottom:1px solid var(--border2)}
+.q-ey{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:7px}
+.q-txt{font-size:16px;font-weight:800;color:var(--navy);line-height:1.4}
+.q-opts{padding:12px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.opt{padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);cursor:pointer;font-size:13.5px;color:var(--text2);background:#fff;text-align:left;display:flex;align-items:flex-start;gap:10px;line-height:1.5;transition:all .12s;width:100%;font-family:inherit}
+.opt:hover:not(.dis){border-color:var(--teal);background:var(--teal-l)}
+.opt.ok{border-color:var(--green);background:var(--green-l)}
+.opt.no{border-color:var(--red);background:var(--red-l)}
+.opt.dis{cursor:default}
+.ol{width:22px;height:22px;min-width:22px;border-radius:50%;background:#EEF2F7;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:1.5px solid var(--border);color:var(--muted);margin-top:1px;flex-shrink:0}
+.opt.ok .ol{background:var(--green);color:#fff;border-color:var(--green)}
+.opt.no .ol{background:var(--red);color:#fff;border-color:var(--red)}
+.expb{margin:0 16px 16px;padding:12px 14px;border-radius:9px;background:#EEF6FF;border-left:3px solid var(--teal);font-size:13px;color:var(--text2);line-height:1.65;display:none}
+.expb.on{display:block;animation:fu .25s ease}
+
+/* ═══ RESULTS ═══ */
+.res-ring{width:88px;height:88px;border-radius:50%;border:4px solid var(--teal);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 12px;background:var(--teal-l)}
+.res-ring .rn{font-size:26px;font-weight:900;color:var(--teal);line-height:1}
+.res-ring .rd{font-size:11px;color:var(--muted)}
+
+/* ═══ LB ═══ */
+.lbr{display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:9px;background:#fff;border:1px solid var(--border2);margin-bottom:6px}
+
+/* TOAST */
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:9px 18px;border-radius:8px;font-size:12.5px;font-weight:600;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.on{opacity:1}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt14{margin-top:14px}.mt16{margin-top:16px}.mt20{margin-top:20px}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb14{margin-bottom:14px}.mb16{margin-bottom:16px}
+.div{height:1px;background:var(--border2);margin:11px 0}
+.slbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;display:block}
+@keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fu .3s ease forwards}
+@media(max-width:500px){.body{padding:16px 12px 48px}.lv-area{padding:12px 12px 8px}.lv-nav{padding:8px 12px 12px}.lv-steps{padding:10px 12px 0}.lcs-n{font-size:17px}.lc-hero-num{font-size:42px}}
+</style>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+
+<!-- ════════ REGISTER ════════ -->
+<div id="s-reg" class="screen">
+  <div class="topbar"><span class="tb-brand">📡 Payments Pulse</span><span class="tb-right">July 2026 · Edition 01</span></div>
+  <div class="body"><div class="inner">
+    <div style="text-align:center;padding:24px 0 20px">
+      <div style="font-size:40px;margin-bottom:10px">📡</div>
+      <h1 style="font-size:22px;font-weight:900;color:var(--navy);line-height:1.2;margin-bottom:7px">Payments Pulse<br><span style="color:var(--teal)">Knowledge Challenge</span></h1>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;max-width:290px;margin:0 auto">Curated intelligence on what's shaping payments across North America — built for sales, presales and consulting teams.</p>
+      <div style="display:flex;justify-content:center;gap:22px;margin-top:16px">
+        <div style="text-align:center"><div style="font-size:20px;font-weight:900;color:var(--teal)">2</div><div style="font-size:10px;color:var(--muted);margin-top:1px">Topics</div></div>
+        <div style="width:1px;background:var(--border)"></div>
+        <div style="text-align:center"><div style="font-size:20px;font-weight:900;color:var(--teal)">3</div><div style="font-size:10px;color:var(--muted);margin-top:1px">Reads each</div></div>
+        <div style="width:1px;background:var(--border)"></div>
+        <div style="text-align:center"><div style="font-size:20px;font-weight:900;color:var(--teal)">~10</div><div style="font-size:10px;color:var(--muted);margin-top:1px">Minutes</div></div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:14px;padding:20px 22px;border:1px solid var(--border2);box-shadow:0 1px 8px rgba(11,31,58,.05)">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.5">One-time setup — your details are remembered.</p>
+      <div style="margin-bottom:11px"><label class="fl">Your Name</label><input id="rn" class="fi" type="text" placeholder="e.g. Priya Sharma" maxlength="50"/></div>
+      <div style="margin-bottom:11px"><label class="fl">Work Email</label><input id="re" class="fi" type="email" placeholder="priya@company.com"/></div>
+      <div><label class="fl">Team</label><select id="rt" class="fs"><option value="">Select…</option><option>Sales</option><option>Delivery</option><option>Consulting</option><option>Pre-Sales</option><option>Leadership</option><option>Other</option></select></div>
+      <div id="rerr" style="color:var(--red);font-size:12px;margin-top:7px;display:none">Please fill in all fields.</div>
+      <button class="btn btn-p btn-f mt16" onclick="doReg()">Let's Go →</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- ════════ TOPIC SELECT ════════ -->
+<div id="s-topics" class="screen">
+  <div class="topbar">
+    <span class="tb-brand">📡 Payments Pulse</span>
+    <div class="tb-right"><span id="tb-nm" class="tb-user"></span><button onclick="goLB()" style="background:transparent;border:1px solid #2A4A6A;color:#7B9AB5;padding:3px 9px;border-radius:6px;font-size:10.5px;cursor:pointer">📊 Board</button></div>
+  </div>
+  <div class="body"><div class="inner fu">
+    <div style="margin-bottom:18px">
+      <span class="chip cg">July 2026 · Edition 01</span>
+      <h2 style="font-size:19px;font-weight:900;color:var(--navy);margin-top:8px;margin-bottom:3px">Choose a Topic</h2>
+      <p style="font-size:13px;color:var(--muted)">Three focused reads per topic, then a short challenge. Complete both for your July badge.</p>
+    </div>
+    <div class="tc" id="tc-ai" onclick="go('ai')">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="font-size:28px;flex-shrink:0;line-height:1;margin-top:2px">🤖</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap">
+            <span style="font-size:14px;font-weight:800;color:var(--navy)">AI in Payments Operations</span>
+            <span class="chip ct">Topic 1</span>
+          </div>
+          <p style="font-size:12.5px;color:var(--muted);line-height:1.55">The false positive problem nobody talks about. Why Canada's regulatory framework is uniquely complex. And what agentic AI means for operations teams in the next 18 months.</p>
+          <div style="display:flex;justify-content:space-between;margin-top:10px;align-items:center">
+            <span style="font-size:11px;color:var(--muted2)">3 reads · 4 questions · 1 scenario · ~5 min</span>
+            <span id="ai-st" style="font-size:12px;color:var(--teal);font-weight:700">Start →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tc" id="tc-rtr" onclick="go('rtr')">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="font-size:28px;flex-shrink:0;line-height:1;margin-top:2px">⚡</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap">
+            <span style="font-size:14px;font-weight:800;color:var(--navy)">Real-Time Payments & Canada RTR</span>
+            <span class="chip cp">Topic 2</span>
+          </div>
+          <p style="font-size:12.5px;color:var(--muted);line-height:1.55">Why Canada waited — and what it built differently. The US two-rail problem. And the $340 billion opportunity hiding in plain sight.</p>
+          <div style="display:flex;justify-content:space-between;margin-top:10px;align-items:center">
+            <span style="font-size:11px;color:var(--muted2)">3 reads · 4 questions · 1 scenario · ~5 min</span>
+            <span id="rtr-st" style="font-size:12px;color:var(--purple);font-weight:700">Start →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="alldone" style="display:none;background:#fff;border-radius:14px;padding:16px 18px;border:1px solid var(--green);background:var(--green-l);margin-top:12px">
+      <div style="display:flex;gap:10px;align-items:center"><div style="font-size:22px">🏆</div><div><div style="font-weight:800;color:var(--navy);font-size:13.5px">July 2026 complete!</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Both badges earned. New edition drops in August.</div></div></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ════════ LEARN VIEWER ════════ -->
+<div id="s-learn" class="screen">
+  <div class="topbar"><span id="ll" class="tb-brand"></span><span id="lu" class="tb-right tb-user"></span></div>
+  <div class="lv">
+    <div id="lv-steps" class="lv-steps"></div>
+    <div class="lv-area"><div class="lv-inner"><div id="lv-card"></div></div></div>
+    <div class="lv-nav">
+      <button id="lv-back" class="btn btn-g" onclick="lcBack()" style="display:none">← Back</button>
+      <button id="lv-next" class="btn btn-p" onclick="lcNext()" style="margin-left:auto">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ QUIZ ════════ -->
+<div id="s-quiz" class="screen">
+  <div class="topbar"><span id="ql" class="tb-brand"></span><span id="qu" class="tb-right tb-user"></span></div>
+  <div class="body"><div class="inner">
+    <div class="qz-meta"><span id="qpt">Question 1 of 4</span><span id="qsl" style="font-weight:700;color:var(--teal)">0 correct</span></div>
+    <div class="qz-bar-w"><div id="qpb" class="qz-bar" style="width:0%"></div></div>
+    <div id="qa" class="fu">
+      <div class="qcard">
+        <div class="qcard-hd"><div id="qcat" class="q-ey"></div><div id="qtxt" class="q-txt"></div></div>
+        <div id="qopts" class="q-opts"></div>
+        <div id="qexp" class="expb"></div>
+      </div>
+      <div style="text-align:right;margin-top:14px"><button id="qnxt" class="btn btn-p" onclick="nextQ()" style="display:none">Next →</button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ════════ SCENARIO ════════ -->
+<div id="s-sc" class="screen">
+  <div class="topbar"><span id="scl" class="tb-brand"></span><span id="scu" class="tb-right tb-user"></span></div>
+  <div class="body"><div class="inner fu">
+    <span class="chip cg" style="margin-bottom:10px;display:inline-block">Scenario Challenge</span>
+    <h2 id="sct" style="font-size:17px;font-weight:900;color:var(--navy);margin-bottom:12px;line-height:1.35"></h2>
+    <div style="background:var(--gold-l);border:1px solid #EDB98A;border-radius:12px;padding:15px 17px;margin-bottom:14px">
+      <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:7px">The Situation</div>
+      <div id="scst" style="font-size:13.5px;color:var(--text2);line-height:1.65;font-weight:500"></div>
+    </div>
+    <span class="slbl">What would you recommend?</span>
+    <div id="scopts" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div id="scexp" class="expb mt8"></div>
+    <div style="text-align:right;margin-top:14px"><button id="scnxt" class="btn btn-p" onclick="finish()" style="display:none">See My Results →</button></div>
+  </div></div>
+</div>
+
+<!-- ════════ RESULTS ════════ -->
+<div id="s-res" class="screen">
+  <div class="topbar"><span class="tb-brand">Your Results</span><span id="ru" class="tb-right tb-user"></span></div>
+  <div class="body"><div class="inner fu" style="text-align:center">
+    <div id="ri" style="font-size:46px;margin:8px 0 6px"></div>
+    <h2 id="rb" style="font-size:17px;font-weight:900;margin-bottom:3px"></h2>
+    <p id="rdesc" style="font-size:12px;color:var(--muted);margin-bottom:16px;max-width:260px;margin-left:auto;margin-right:auto;line-height:1.5"></p>
+    <div class="res-ring"><span id="rnum" class="rn"></span><span id="rden" class="rd"></span></div>
+    <div style="display:inline-flex;align-items:center;gap:5px;background:var(--green-l);border:1px solid #9ACFB8;border-radius:14px;padding:4px 11px;font-size:11px;font-weight:700;color:var(--green);margin-bottom:14px">✓ Score saved automatically</div>
+    <div style="background:#fff;border-radius:14px;padding:18px 20px;border:1px solid var(--border2);text-align:left;margin-bottom:12px;box-shadow:0 1px 6px rgba(11,31,58,.04)">
+      <span class="slbl">Breakdown</span><div id="rbr"></div>
+    </div>
+    <div style="background:var(--gold-l);border-radius:14px;padding:16px 18px;border:1px solid #EDB98A;text-align:left;margin-bottom:16px;border-left:3px solid var(--gold)">
+      <div style="font-size:9.5px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px">🤝 Try This in Your Next Client Conversation</div>
+      <div id="rhook" style="font-size:13px;color:var(--text2);line-height:1.65"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button class="btn btn-o btn-f" onclick="goTopics()">Play the Other Topic →</button>
+      <button class="btn btn-g btn-f" onclick="goLB()">📊 View Leaderboard</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- ════════ LEADERBOARD ════════ -->
+<div id="s-lb" class="screen">
+  <div class="topbar"><span class="tb-brand">📊 Leaderboard</span><span class="tb-right">July 2026</span></div>
+  <div class="body"><div class="inner fu">
+    <div style="margin-bottom:16px"><h2 style="font-size:19px;font-weight:900;color:var(--navy);margin-bottom:3px">Team Standings</h2><p style="font-size:12px;color:var(--muted)">Scores saved on this device and browser.</p></div>
+    <div style="display:flex;gap:7px;margin-bottom:13px">
+      <button class="btn btn-sm btn-p" id="lf-all" onclick="fLB('all')">All</button>
+      <button class="btn btn-sm btn-g" id="lf-ai" onclick="fLB('ai')">🤖 AI Ops</button>
+      <button class="btn btn-sm btn-g" id="lf-rtr" onclick="fLB('rtr')">⚡ RTR</button>
+    </div>
+    <div id="lblist"></div>
+    <div id="lbmt" style="display:none;text-align:center;padding:28px 0;color:var(--muted);font-size:13px">No scores yet.</div>
+    <div class="div"></div>
+    <button class="btn btn-g btn-f" onclick="SS(prevS||'s-topics')">← Back</button>
+  </div></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// LEARN CARDS — rich, specific, North America focused
+// Each card: hero stat → body prose → data row or callout → read link
+// ══════════════════════════════════════════════════════
+const CARDS = {
+ai:[
+// ── Read 1: The False Positive Problem
+`<div class="lcard">
+  <div class="lc-hero" style="background:linear-gradient(135deg,#0B1F3A 0%,#162E52 100%);color:#fff">
+    <div class="lc-hero-eyebrow" style="color:#5BC8C0">AI in Payments Operations</div>
+    <div class="lc-hero-num" style="color:#5BC8C0">95–99<span style="font-size:28px">%</span></div>
+    <div class="lc-hero-sub">of AML alerts generated by legacy rules-based systems are false positives — legitimate transactions wrongly flagged</div>
+  </div>
+  <div class="lc-body">
+    <div class="lc-section-title">The invisible problem draining every bank's operations team</div>
+    <div class="lc-prose">
+      Most payment operations conversations focus on speed. The real problem is <strong>noise</strong>.<br><br>
+      Legacy rules-based compliance systems — the kind most North American banks still run — are designed to be hypersensitive. They flag anything that looks unusual. The result: investigators spend <strong>up to 90% of their working day</strong> clearing false alarms instead of investigating real risk.<br><br>
+      At a large Canadian bank processing 5 million transactions per day, a 0.1% false positive rate generates 5,000 manual reviews — every single day. Multiply that by 45–60 minutes per case and you have the equivalent of 150+ full-time investigator roles doing work that produces almost no compliance value.<br><br>
+      <strong>HSBC</strong> — with operations in Canada and the US — publicly reported an <span class="hl">80% reduction in false positive AML alerts</span> after deploying AI-based transaction monitoring. TD Bank's 2024 operations disclosure referenced a 60% reduction in manual review queues in its payments exception handling pilot. The ROI is not theoretical.
+    </div>
+  </div>
+  <div class="lc-stats">
+    <div class="lcs"><div class="lcs-n r">95–99%</div><div class="lcs-l">False positive rate in legacy AML screening</div></div>
+    <div class="lcs"><div class="lcs-n t">80%</div><div class="lcs-l">False positive reduction at HSBC with AI monitoring</div></div>
+    <div class="lcs"><div class="lcs-n g">60%</div><div class="lcs-l">Manual review queue reduction at TD Bank (2024 pilot)</div></div>
+  </div>
+  <a href="https://www.mckinsey.com/industries/financial-services/our-insights/the-state-of-ai-in-financial-services" target="_blank" rel="noopener" class="lc-link">
+    <span style="font-size:17px">📰</span>
+    <div><div class="lt">McKinsey: The State of AI in Financial Services 2024</div><div class="ls">McKinsey Global Institute</div></div>
+    <span style="margin-left:auto;color:var(--teal);font-size:13px">↗</span>
+  </a>
+</div>`,
+
+// ── Read 2: Canada's Regulatory Complexity
+`<div class="lcard">
+  <div class="lc-hero" style="background:linear-gradient(135deg,#1A3A5C 0%,#0B2840 100%);color:#fff">
+    <div class="lc-hero-eyebrow" style="color:#5BC8C0">AI in Payments Operations</div>
+    <div class="lc-hero-num" style="color:#F4C080">2×</div>
+    <div class="lc-hero-sub">The explainability burden Canadian banks carry — reporting to both OSFI (prudential risk) and FINTRAC (AML) means every AI-assisted decision must be defensible to two separate regulators</div>
+  </div>
+  <div class="lc-body">
+    <div class="lc-section-title">Canada's regulatory tightrope — and why it shapes every AI decision</div>
+    <div class="lc-prose">
+      In January 2024, OSFI released <strong>Guideline B-13</strong> — Canada's first AI-specific regulatory framework for federally regulated banks. The core requirement: banks must be able to <strong>explain every AI-assisted decision</strong> to regulators and, where required, to customers.<br><br>
+      This creates a genuine tension. Modern AI models — especially large language models and deep learning systems — make decisions through patterns that are difficult to articulate in plain language. FINTRAC separately requires that <strong>every SAR (Suspicious Activity Report) contains a clear human reasoning chain</strong>. An AI that flags a transaction as suspicious must be backed by an investigator who can explain why.<br><br>
+      RBC's AI operations team has responded by building a dedicated <strong>"explainability layer"</strong> — a second system that translates the primary AI's output into plain-language reasoning trails auditable by regulators. Scotiabank is piloting a similar approach in its AML division.<br><br>
+      The US comparison: the OCC issued AI risk management guidance in November 2023, and the Federal Reserve's SR 11-7 (model risk management, originally written for statistical models) is now being formally reinterpreted to cover large language models. <strong>Canadian banks with US operations face both regulatory regimes simultaneously.</strong>
+    </div>
+  </div>
+  <div class="lc-tension" style="margin:0 22px 14px">
+    <div class="lc-tension-lbl" style="color:var(--gold)">The Explainability Gap</div>
+    <div class="lc-tension-row"><span class="ico">⚠️</span><span><strong>FINTRAC requires:</strong> human-authored reasoning in every SAR filing — AI output alone is not sufficient</span></div>
+    <div class="lc-tension-row"><span class="ico">⚠️</span><span><strong>OSFI requires:</strong> banks to document how AI models work, what their limitations are, and how errors are caught</span></div>
+    <div class="lc-tension-row"><span class="ico">✅</span><span><strong>Solution emerging:</strong> "explainability layers" — secondary AI systems that translate decisions into auditable language</span></div>
+  </div>
+  <a href="https://www.osfi-bsif.gc.ca/en/guidance/guidance-library/technology-cyber-risk-management" target="_blank" rel="noopener" class="lc-link">
+    <span style="font-size:17px">🏛️</span>
+    <div><div class="lt">OSFI Guideline B-13: Technology & Cyber Risk Management</div><div class="ls">Office of the Superintendent of Financial Institutions, Canada</div></div>
+    <span style="margin-left:auto;color:var(--teal);font-size:13px">↗</span>
+  </a>
+</div>`,
+
+// ── Read 3: Agentic AI — next 18 months
+`<div class="lcard">
+  <div class="lc-hero" style="background:linear-gradient(135deg,#2D1F5E 0%,#1E1445 100%);color:#fff">
+    <div class="lc-hero-eyebrow" style="color:#B8A0E8">AI in Payments Operations</div>
+    <div class="lc-hero-num" style="color:#B8A0E8">2.3×</div>
+    <div class="lc-hero-sub">ROI uplift that banks achieving AI Stage 2 (workflow orchestration) see versus those still at Stage 1 (single-task automation) — McKinsey 2024</div>
+  </div>
+  <div class="lc-body">
+    <div class="lc-section-title">What the next 18 months look like — agentic AI arrives in operations</div>
+    <div class="lc-prose">
+      The industry is moving from AI that <em>assists</em> to AI that <em>initiates</em>. <strong>Agentic AI</strong> doesn't wait for a human to open a case — it detects an exception, gathers all relevant information, attempts resolution through defined channels, and only escalates to a human when it can't resolve independently.<br><br>
+      <strong>JPMorgan</strong> now runs AI that handles end-to-end SWIFT message repair — previously requiring specialist human teams to identify, decode, and resubmit failed cross-border payment messages. The AI resolves over 85% of cases without human intervention.<br><br>
+      In Canada, <strong>Scotiabank</strong> announced in early 2025 a pilot for autonomous payment rerouting — where AI automatically reroutes failed international payments through alternative correspondent banking channels without human initiation. It is the first Canadian bank to disclose this capability publicly.<br><br>
+      The talent gap is the hidden constraint: <strong>67% of Canadian bank operations heads</strong> report they lack AI-literate staff to properly oversee AI decisions (Deloitte Canada 2024). The technology is moving faster than the people strategy — which is exactly where the implementation conversation should begin.
+    </div>
+  </div>
+  <div class="lc-callout" style="border-color:var(--purple);background:var(--purple-l);margin-bottom:14px">
+    <div class="lc-callout-lbl" style="color:var(--purple)">Conversation Starter for Senior Clients</div>
+    <div class="lc-callout-txt">"When you think about the AI your ops team is running today — are you measuring its decisions, or trusting them?" Most operations leaders haven't separated measurement from oversight. That gap is where the risk — and the conversation — lives.</div>
+  </div>
+  <a href="https://www2.deloitte.com/insights/us/en/industry/financial-services/ai-in-banking.html" target="_blank" rel="noopener" class="lc-link">
+    <span style="font-size:17px">📊</span>
+    <div><div class="lt">Deloitte: AI in Banking Operations — From Pilots to Scale</div><div class="ls">Deloitte Insights 2025</div></div>
+    <span style="margin-left:auto;color:var(--teal);font-size:13px">↗</span>
+  </a>
+</div>`
+],
+
+rtr:[
+// ── Read 1: Why Canada waited — and what it built
+`<div class="lcard">
+  <div class="lc-hero" style="background:linear-gradient(135deg,#0B1F3A 0%,#162E52 100%);color:#fff">
+    <div class="lc-hero-eyebrow" style="color:#5BC8C0">Real-Time Payments & Canada RTR</div>
+    <div class="lc-hero-num" style="color:#5BC8C0">£459<span style="font-size:24px">M</span></div>
+    <div class="lc-hero-sub">APP fraud in the UK in H1 2024 alone — the cost of launching a real-time rail without fraud controls. Canada watched. Then built differently.</div>
+  </div>
+  <div class="lc-body">
+    <div class="lc-section-title">Canada is late — by design, not by accident</div>
+    <div class="lc-prose">
+      Canada's RTR programme launched in 2016 and rebuilt its technical spec <strong>three times</strong> before settling on the current architecture. That's not indecision — it's watching what happened to peers and refusing to inherit their problems.<br><br>
+      The UK launched Faster Payments in 2008. Within five years, Authorised Push Payment (APP) fraud — where criminals trick people into sending real-time payments to fake accounts — became a national problem. By H1 2024, APP fraud hit <strong>£459 million in six months</strong>. The UK spent the next decade retrofitting fraud controls onto a rail not designed for them.<br><br>
+      Australia launched the NPP in 2018. Business adoption in year one was just 14% — companies couldn't figure out how to use the new infrastructure because overlay products hadn't been designed yet.<br><br>
+      <strong>Canada built the solution in from day one.</strong> The RTR includes a <span class="hl">Centralised Fraud Service</span> that screens every transaction before settlement — a first among major real-time rails globally. It also includes <strong>Confirmation of Payee (CoP)</strong>: the system verifies the recipient's name matches the account before the payment sends. CoP alone would have prevented an estimated 40% of UK APP fraud cases.
+    </div>
+  </div>
+  <div class="lc-stats">
+    <div class="lcs"><div class="lcs-n r">£459M</div><div class="lcs-l">UK APP fraud, H1 2024 — after 16 years of patching</div></div>
+    <div class="lcs"><div class="lcs-n g">1st</div><div class="lcs-l">Country to build fraud service into the rail at launch</div></div>
+    <div class="lcs"><div class="lcs-n t">40%</div><div class="lcs-l">Of UK APP fraud CoP would have prevented</div></div>
+  </div>
+  <a href="https://www.payments.ca/our-work/real-time-rail" target="_blank" rel="noopener" class="lc-link">
+    <span style="font-size:17px">🇨🇦</span>
+    <div><div class="lt">Payments Canada — Real-Time Rail Programme</div><div class="ls">Payments Canada, Official Programme Page</div></div>
+    <span style="margin-left:auto;color:var(--teal);font-size:13px">↗</span>
+  </a>
+</div>`,
+
+// ── Read 2: The US two-rail problem
+`<div class="lcard">
+  <div class="lc-hero" style="background:linear-gradient(135deg,#1A3A5C 0%,#0B2840 100%);color:#fff">
+    <div class="lc-hero-eyebrow" style="color:#5BC8C0">Real-Time Payments & Canada RTR</div>
+    <div class="lc-hero-num" style="color:#F4C080">1.8<span style="font-size:24px">%</span></div>
+    <div class="lc-hero-sub">Share of total US payment volume that is real-time in 2024 — despite having two competing real-time rails since 2017 and 2023</div>
+  </div>
+  <div class="lc-body">
+    <div class="lc-section-title">The US two-rail problem — and why Canada has an advantage</div>
+    <div class="lc-prose">
+      The US has two real-time payment rails running simultaneously, and they don't always talk to each other.<br><br>
+      <strong>RTP® (The Clearing House)</strong>: launched 2017, private sector, 600+ financial institutions, handles up to $1M per transaction. Primarily used by large banks for business payments.<br><br>
+      <strong>FedNow® (Federal Reserve)</strong>: launched July 2023, 900+ institutions as of 2025, max $500K per transaction. Primarily smaller banks and credit unions.<br><br>
+      The fragmentation problem is real: a payment from JPMorgan Chase to a regional credit union on FedNow may <strong>still not be real-time in 2025</strong> if the credit union isn't also on RTP. US banks with business clients across both rails must maintain dual integrations — doubling implementation and operational cost.<br><br>
+      <strong>Canada's structural advantage</strong>: one rail, one connection, all institutions. Every Canadian bank on RTR can reach every other Canadian bank on RTR instantly. The simplicity that looks boring on paper is worth hundreds of millions in avoided integration cost across the industry.<br><br>
+      For Canadian banks with US operations, this is a live procurement question: RTR strategy for domestic Canadian business, plus a dual-rail decision for US-facing operations. That intersection is an active conversation at every major Canadian bank right now.
+    </div>
+  </div>
+  <div class="lc-tension" style="margin:0 22px 14px">
+    <div class="lc-tension-lbl" style="color:var(--teal)">US vs Canada — Real-Time Rail Comparison</div>
+    <div class="lc-tension-row"><span class="ico">🇺🇸</span><span><strong>US:</strong> Two rails (RTP + FedNow), dual integration required, 1.8% of total payment volume real-time</span></div>
+    <div class="lc-tension-row"><span class="ico">🇨🇦</span><span><strong>Canada:</strong> One rail (RTR), single integration, fraud service + CoP built in, Q4 2026 launch</span></div>
+    <div class="lc-tension-row"><span class="ico">📈</span><span><strong>Opportunity:</strong> Banks with US + Canada operations need a cross-border real-time strategy — not two separate ones</span></div>
+  </div>
+  <a href="https://www.aciworldwide.com/prime-time-for-real-time" target="_blank" rel="noopener" class="lc-link">
+    <span style="font-size:17px">📊</span>
+    <div><div class="lt">ACI Worldwide: Prime Time for Real-Time 2024</div><div class="ls">Global real-time payments benchmarking</div></div>
+    <span style="margin-left:auto;color:var(--teal);font-size:13px">↗</span>
+  </a>
+</div>`,
+
+// ── Read 3: The $340B opportunity
+`<div class="lcard">
+  <div class="lc-hero" style="background:linear-gradient(135deg,#2D1F5E 0%,#1E1445 100%);color:#fff">
+    <div class="lc-hero-eyebrow" style="color:#B8A0E8">Real-Time Payments & Canada RTR</div>
+    <div class="lc-hero-num" style="color:#B8A0E8">$340<span style="font-size:24px">B</span></div>
+    <div class="lc-hero-sub">Daily value of ACSS batch payments in Canada — the legacy infrastructure RTR is designed to eventually replace, and the scale of what's at stake</div>
+  </div>
+  <div class="lc-body">
+    <div class="lc-section-title">The $340 billion question — and where the real opportunity hides</div>
+    <div class="lc-prose">
+      Replacing ACSS batch payments with RTR is not the opportunity. The opportunity is the <strong>net-new payment flows RTR enables that simply don't exist today</strong>.<br><br>
+      Consider three examples that are already in motion:<br><br>
+      <strong>Insurance premium collection.</strong> Canada's insurance premium market is a $60 billion annual flow. Over 80% currently runs on pre-authorised debit (PAD) — a system with high failure rates, limited recourse, and significant processing friction. RTR's Request-for-Payment overlay allows insurers to send a real-time payment request that a customer approves in their banking app. Fewer failures. No pre-authorised debit forms. Real-time confirmation.<br><br>
+      <strong>Government disbursements.</strong> CRA tax refunds, benefit payments and CERB-style transfers currently take 3–5 business days via EFT. RTR enables instant government-to-citizen payments. The federal government is already in early-stage planning for RTR-based disbursements.<br><br>
+      <strong>B2B supplier payments.</strong> Walmart Canada has publicly stated intent to transition B2B payments with suppliers to RTR within 12 months of launch. Their accounts payable team is already in pilot. Suppliers who aren't RTR-ready when Walmart's deadline arrives will face payment delays — creating direct urgency for smaller businesses to connect.<br><br>
+      <strong>The legislative clock is running.</strong> Bill C-365 received Royal Assent in June 2024 — the legal foundation for Canadian Open Banking. Phase 2 payment initiation (pay-by-bank) cannot launch without RTR. The law has passed. The rails are being built. The window to design overlay products is now.
+    </div>
+  </div>
+  <div class="lc-callout" style="border-color:var(--gold);background:var(--gold-l);margin-bottom:14px">
+    <div class="lc-callout-lbl" style="color:var(--gold)">Conversation Starter for Senior Clients</div>
+    <div class="lc-callout-txt">"Walmart Canada has already set a supplier RTR deadline. Which of your business clients will face the same pressure from their largest customers — and are they talking to you about it yet?"</div>
+  </div>
+  <a href="https://www.canada.ca/en/financial-consumer-agency/programs/research/open-banking-review-summary.html" target="_blank" rel="noopener" class="lc-link">
+    <span style="font-size:17px">🏛️</span>
+    <div><div class="lt">FCAC: Open Banking / Consumer-Directed Finance in Canada</div><div class="ls">Financial Consumer Agency of Canada</div></div>
+    <span style="margin-left:auto;color:var(--teal);font-size:13px">↗</span>
+  </a>
+</div>`
+]};
+
+// ══════════════════════
+// QUIZ QUESTIONS
+// ══════════════════════
+const QS={
+ai:[
+  {cat:'From Read 1',t:'What percentage of AML alerts generated by legacy rules-based systems typically turn out to be false positives?',o:['Around 40–50%','Around 60–70%','Around 95–99%','Around 20–30%'],c:2,e:'<strong>95–99% are false positives</strong> — legitimate transactions wrongly flagged. This is the core operations problem AI addresses. HSBC reported an 80% reduction in false positive alerts after deploying AI-based monitoring. TD Bank\'s 2024 pilot reported a 60% reduction in manual review queues.'},
+  {cat:'From Read 2',t:'Why do Canadian banks face a unique "double explainability burden" when deploying AI in payments operations?',o:['They must comply with both US and European AI regulations','They report to both OSFI (prudential risk) and FINTRAC (AML compliance) — two separate regulators each requiring AI decisions to be explainable','Canadian banks have stricter internal audit requirements than US banks','The Bank of Canada requires separate AI approval for each use case'],c:1,e:'<strong>OSFI + FINTRAC simultaneously.</strong> OSFI Guideline B-13 (January 2024) requires banks to document and explain AI model decisions for prudential risk purposes. FINTRAC separately requires that every SAR filing contains a human-authored reasoning chain. Banks like RBC have built dedicated "explainability layers" to meet both requirements.'},
+  {cat:'From Read 3',t:'Scotiabank\'s 2025 AI pilot in payments operations was notable because it was the first Canadian bank to publicly disclose which capability?',o:['Fully automated SAR filing with no human review','Autonomous payment rerouting — AI reroutes failed international payments without human initiation','Real-time customer-facing AI dispute resolution','AI-generated correspondent banking agreements'],c:1,e:'<strong>Autonomous payment rerouting.</strong> Scotiabank\'s pilot allows AI to automatically reroute failed international payments through alternative correspondent banking channels without waiting for human initiation. This moves from AI-assisted to agentic AI — a meaningful shift in how operations workflows are designed.'},
+  {cat:'Quick Recall',t:'McKinsey\'s 2024 research found that banks reaching AI Stage 2 (workflow orchestration) see what ROI multiple versus those at Stage 1 (single-task automation)?',o:['1.4×','2.3×','3.8×','5×'],c:1,e:'<strong>2.3× ROI uplift.</strong> The jump from Stage 1 (automating individual tasks) to Stage 2 (orchestrating full workflows end-to-end) is where the compounding returns appear. Stage 1 reduces cost per task. Stage 2 eliminates entire workflow categories from the human workload.'},
+],
+rtr:[
+  {cat:'From Read 1',t:"Canada's RTR includes a Confirmation of Payee (CoP) feature. What does it do — and why does it matter?",o:["It confirms the payment amount matches the original invoice","It verifies the recipient's name matches the account before the payment sends — preventing misdirected and fraudulent payments","It confirms the sending bank has sufficient liquidity before clearing","It provides the payer with a real-time receipt"],c:1,e:'<strong>Confirmation of Payee verifies recipient identity before payment.</strong> This is significant because it was absent from UK Faster Payments at launch — and UK APP fraud (where criminals impersonate legitimate recipients) grew to £459M in H1 2024 alone. CoP is estimated to have prevented 40% of those cases if it had existed. Canada built it in from day one.'},
+  {cat:'From Read 2',t:"What is the practical consequence of the US having two competing real-time rails — RTP and FedNow — running simultaneously?",o:["It gives US businesses more payment options, which is entirely positive","Banks must maintain dual integrations, a payment from a large bank to a credit union may still not be real-time if they're on different rails, and total real-time volume remains just 1.8% of US payments","FedNow has made RTP obsolete and most banks are migrating","It has no practical consequence — both rails are fully interoperable"],c:1,e:'<strong>Fragmentation and low adoption.</strong> Despite having two real-time rails since 2017 and 2023, only 1.8% of US payment volume is real-time in 2024. Cross-rail payments are not always instant. Canadian banks with US operations face dual integration costs. Canada\'s single-rail design avoids this entirely.'},
+  {cat:'From Read 3',t:"Bill C-365 received Royal Assent in June 2024. Why is this significant for Canada's RTR story?",o:["It set the final RTR launch date as Q4 2026","It is the legal foundation for Canadian Open Banking — and Open Banking Phase 2 (pay-by-bank) cannot launch without RTR being live first","It required all Canadian banks to connect to RTR within 12 months of launch","It transferred RTR oversight from Payments Canada to the Bank of Canada"],c:1,e:"<strong>Bill C-365 is the legal foundation for Open Banking.</strong> Phase 2 — payment initiation or 'pay-by-bank' — allows consumers and businesses to pay directly from their bank account, bypassing card networks and their 1.5–3% interchange cost. It legally cannot launch before RTR is live. The law has passed. The clock is running."},
+  {cat:'Quick Recall',t:'Walmart Canada has publicly committed to which action within 12 months of RTR launch?',o:['Replacing all consumer card payments with RTR-based transactions','Transitioning B2B supplier payments to RTR — and their accounts payable team is already in pilot','Launching a Walmart-branded digital wallet on the RTR rail','Replacing Interac e-Transfer for employee payroll'],c:1,e:"<strong>B2B supplier payment transition.</strong> Walmart Canada's public commitment is a signal of how quickly RTR adoption will become a supply chain requirement — not just a banking choice. Suppliers who aren't RTR-ready when Walmart's deadline arrives will face payment delays. This creates direct urgency for smaller Canadian businesses to connect — and for their banks to offer RTR business products."},
+]};
+
+// ══════════════════════
+// SCENARIOS
+// ══════════════════════
+const SC={
+ai:{
+  t:"A VP of Operations at a major Canadian bank says: 'We've run two AI pilots in 18 months. Strong results in testing. Neither made it to production. Getting budget for a third attempt is going to be very difficult.'",
+  sit:"Both pilots showed 60–70% case time reductions in controlled environments. Neither scaled. Post-mortem analysis suggests the business cases were built on projected headcount savings that the CFO's office couldn't validate independently. The next annual budget cycle opens in 4 months. A peer bank recently announced a live AI deployment in AML operations.",
+  opts:[
+    {l:'A',t:'Propose a third pilot with a tighter scope and clearer success criteria.',c:false,e:"Two pilots that didn't scale is a measurement and accountability problem, not a scope problem. A third pilot structured the same way will produce the same result — and the VP already told you budget approval will be very difficult. You haven't addressed why the first two failed."},
+    {l:'B',t:'Ask what metric they used to measure pilot success — then reframe the business case around auditable operational metrics (investigator hours per case before vs after, cost per investigation) rather than projected headcount savings.',c:true,e:'✅ <strong>Right approach.</strong> The CFO rejected projected savings because they couldn\'t be independently verified. Operational metrics — time per case measured from week one, queue length, cost per investigation — are auditable in real time. Asking what metric they used surfaces the real barrier and positions you as someone solving their internal problem, not selling a product.'},
+    {l:'C',t:"Suggest bypassing the pilot approach entirely and moving to a phased full deployment with contractual ROI guarantees.",c:false,e:"ROI guarantees sound compelling but shift risk onto the vendor in a way that's rarely sustainable. More importantly, the bank's internal problem is that they can't present a credible business case — a guarantee from a vendor doesn't solve that."},
+    {l:'D',t:"Mention the peer bank's announcement and suggest they need to move urgently before falling further behind.",c:false,e:"Competitor pressure is real context, but leading with it makes you a pressure salesperson rather than a business advisor. The VP is already aware of the peer announcement — it's why they're having this conversation. Lead with the business case fix."},
+  ]
+},
+rtr:{
+  t:"A VP of Transaction Banking says: 'We're fully focused on RTR connectivity and ISO 20022 compliance. That's what the regulator is watching. Our business clients haven't asked about anything beyond that yet.'",
+  sit:"The bank is 6 months from their Q4 2026 RTR go-live target. Connectivity and compliance work is on track. No overlay product design has started. Three of their largest business clients — a national insurer, a utility, and a national distributor — are in the same sector as companies Walmart Canada has already approached about RTR supplier payment timelines.",
+  opts:[
+    {l:'A',t:'Support the connectivity-first approach and offer to extend the ISO 20022 migration engagement.',c:false,e:"Connectivity and compliance are necessary — but this positions you as an implementation vendor. Every bank will achieve RTR connectivity. The question is what they build on top of it, and when. Their clients haven't asked yet — but their clients' largest customers (like Walmart) may already be setting timelines."},
+    {l:'B',t:"Point out that Walmart Canada has already announced RTR supplier payment timelines — which directly affects their insurer, utility and distributor clients. Ask: 'When those clients call you about RTR in 6 months, what product will you be able to offer them?'",c:true,e:"✅ <strong>Right approach.</strong> You've connected the abstract RTR story to three named clients sitting in their portfolio. The Walmart timeline isn't theoretical — it's a live supply chain pressure that will reach their clients. The question 'What product will you offer?' isn't a challenge — it's an invitation to plan. You've shifted from infrastructure to commercial strategy without dismissing the compliance work."},
+    {l:'C',t:'Tell them that focusing only on compliance while competitors design overlay products is a strategic mistake they will regret.',c:false,e:"Directionally true, but calling it a mistake in a first conversation damages the relationship before you've built credibility. The message is 'and, not instead of' — compliance work and overlay product design should be running in parallel, not sequentially."},
+    {l:'D',t:"Pivot to Open Banking Phase 2 as the more important long-term opportunity.",c:false,e:"Open Banking Phase 2 depends on RTR being live. The client is 6 months from RTR go-live and hasn't started overlay product design. Jumping to a 2027+ topic skips the immediate window and makes you seem disconnected from their current timeline."},
+  ]
+}};
+
+const META={
+  ai:{badge:{i:'🤖',n:'AI Ops Badge',lvl:['Aware','Informed','Ready']},hook:"Ask: 'When your AI flags a payment for review, who is accountable for that decision — and how would you explain it to FINTRAC if challenged?' Most operations leaders haven't separated measurement from oversight. That gap is the conversation."},
+  rtr:{badge:{i:'⚡',n:'RTR Badge',lvl:['Aware','Informed','Ready']},hook:"Ask: 'Which of your business clients are most exposed to RTR-driven payment timeline pressure from their own customers — and are they talking to you about it yet?' Named clients in their portfolio make this immediate, not hypothetical."}
+};
+
+// ══════════════════════
+// STATE + INIT
+// ══════════════════════
+let st={player:null,topic:null,cardIdx:0,qi:0,score:0,scOk:false,done:{}};
+let prevS='s-topics';
+
+window.onload=async()=>{
+  try{
+    await microsoftTeams.app.initialize();
+    const ctx=await microsoftTeams.app.getContext();
+    st.player={name:ctx.user.displayName||ctx.user.userPrincipalName.split('@')[0],email:ctx.user.userPrincipalName,team:localStorage.getItem('pp_team')||'Teams User'};
+    if(!localStorage.getItem('pp_team'))localStorage.setItem('pp_team','Teams User');
+    hydrate();SS('s-topics');return;
+  }catch(e){}
+  const sv=localStorage.getItem('pp_player');
+  if(sv){st.player=JSON.parse(sv);hydrate();SS('s-topics');return;}
+  SS('s-reg');
+};
+
+function hydrate(){
+  const sc=JSON.parse(localStorage.getItem('pp_scores')||'[]');
+  sc.forEach(s=>{if(s.email===st.player.email)st.done[s.topic]=s;});
+  document.getElementById('tb-nm').textContent=st.player.name.split(' ')[0];
+  updCards();
+}
+
+function doReg(){
+  const n=document.getElementById('rn').value.trim(),e=document.getElementById('re').value.trim(),t=document.getElementById('rt').value;
+  if(!n||!e||!t||!e.includes('@')){document.getElementById('rerr').style.display='block';return;}
+  st.player={name:n,email:e,team:t};
+  localStorage.setItem('pp_player',JSON.stringify(st.player));
+  hydrate();SS('s-topics');
+}
+
+function updCards(){
+  ['ai','rtr'].forEach(id=>{
+    const d=st.done[id];
+    if(d){document.getElementById(id+'-st').textContent=`✅ ${d.score}/${d.total} · ${d.badge}`;document.getElementById(id+'-st').style.color='var(--green)';document.getElementById('tc-'+id).classList.add('done');}
+  });
+  if(st.done.ai&&st.done.rtr)document.getElementById('alldone').style.display='block';
+}
+
+// ══════════════════════
+// LEARN — card viewer
+// ══════════════════════
+const STEP_LABELS={ai:['The False Positive Problem','Canada\'s Regulatory Tightrope','Agentic AI — Next 18 Months'],rtr:['Why Canada Waited','The US Two-Rail Problem','The $340B Opportunity']};
+
+function go(id){
+  st.topic=id;st.cardIdx=0;st.qi=0;st.score=0;st.scOk=false;
+  document.getElementById('ll').textContent=id==='ai'?'🤖 AI in Payments Ops':'⚡ Real-Time Payments';
+  document.getElementById('lu').textContent=st.player.name.split(' ')[0];
+  renderCard();SS('s-learn');
+}
+
+function renderCard(){
+  const cards=CARDS[st.topic],n=cards.length,i=st.cardIdx,lbls=STEP_LABELS[st.topic];
+  // Step indicator with labels
+  const steps=document.getElementById('lv-steps');
+  steps.innerHTML=lbls.map((l,j)=>{
+    const cls=j<i?'done':j===i?'active':'';
+    const sep=j<n-1?'<div class="lv-sep"></div>':'';
+    return `<div class="lv-step ${cls}" onclick="jumpCard(${j})"><div class="lv-step-dot"></div><div class="lv-step-lbl">${l}</div></div>${sep}`;
+  }).join('');
+  // Card content
+  document.getElementById('lv-card').innerHTML=cards[i];
+  // Nav
+  document.getElementById('lv-back').style.display=i>0?'inline-flex':'none';
+  document.getElementById('lv-next').textContent=i===n-1?'Take the Quiz →':'Next →';
+}
+
+function jumpCard(j){if(j<=st.cardIdx){st.cardIdx=j;renderCard();document.querySelector('.lv-area').scrollTop=0;}}
+function lcNext(){const n=CARDS[st.topic].length;if(st.cardIdx<n-1){st.cardIdx++;renderCard();}else{loadQ();SS('s-quiz');}document.querySelector('.lv-area').scrollTop=0;}
+function lcBack(){if(st.cardIdx>0){st.cardIdx--;renderCard();}document.querySelector('.lv-area').scrollTop=0;}
+
+// ══════════════════════
+// QUIZ
+// ══════════════════════
+function loadQ(){
+  const qs=QS[st.topic],q=qs[st.qi],tot=qs.length;
+  document.getElementById('ql').textContent=st.topic==='ai'?'🤖 AI Ops · Quiz':'⚡ RTR · Quiz';
+  document.getElementById('qu').textContent=st.player.name.split(' ')[0];
+  document.getElementById('qpt').textContent=`Question ${st.qi+1} of ${tot}`;
+  document.getElementById('qsl').textContent=`${st.score} correct`;
+  document.getElementById('qpb').style.width=`${(st.qi/tot)*100}%`;
+  document.getElementById('qcat').textContent=q.cat;
+  document.getElementById('qtxt').textContent=q.t;
+  document.getElementById('qopts').innerHTML=['A','B','C','D'].slice(0,q.o.length).map((l,i)=>`<button class="opt" onclick="ansQ(${i})"><span class="ol">${l}</span><span>${q.o[i]}</span></button>`).join('');
+  document.getElementById('qexp').className='expb';
+  document.getElementById('qnxt').style.display='none';
+  const a=document.getElementById('qa');a.classList.remove('fu');void a.offsetWidth;a.classList.add('fu');
+}
+function ansQ(i){
+  const q=QS[st.topic][st.qi];
+  document.querySelectorAll('#qopts .opt').forEach((o,j)=>{o.classList.add('dis');if(j===q.c)o.classList.add('ok');else if(j===i&&i!==q.c)o.classList.add('no');});
+  if(i===q.c)st.score++;
+  document.getElementById('qsl').textContent=`${st.score} correct`;
+  const e=document.getElementById('qexp');e.innerHTML=q.e;e.classList.add('on');
+  const nb=document.getElementById('qnxt');nb.style.display='inline-flex';
+  nb.textContent=st.qi===QS[st.topic].length-1?'Scenario Challenge →':'Next →';
+}
+function nextQ(){st.qi++;st.qi>=QS[st.topic].length?loadSc():loadQ();}
+
+// ══════════════════════
+// SCENARIO
+// ══════════════════════
+function loadSc(){
+  const sc=SC[st.topic];
+  document.getElementById('scl').textContent=st.topic==='ai'?'🤖 AI Ops · Scenario':'⚡ RTR · Scenario';
+  document.getElementById('scu').textContent=st.player.name.split(' ')[0];
+  document.getElementById('sct').textContent=sc.t;
+  document.getElementById('scst').textContent=sc.sit;
+  document.getElementById('scopts').innerHTML=sc.opts.map((o,i)=>`<button class="opt" onclick="ansSc(${i})"><span class="ol">${o.l}</span><span>${o.t}</span></button>`).join('');
+  document.getElementById('scexp').className='expb mt8';
+  document.getElementById('scnxt').style.display='none';
+  SS('s-sc');
+}
+function ansSc(i){
+  const sc=SC[st.topic];
+  document.querySelectorAll('#scopts .opt').forEach((o,j)=>{o.classList.add('dis');if(sc.opts[j].c)o.classList.add('ok');else if(j===i&&!sc.opts[i].c)o.classList.add('no');});
+  st.scOk=sc.opts[i].c;if(st.scOk)st.score++;
+  const e=document.getElementById('scexp');e.innerHTML=sc.opts[i].e;e.classList.add('on');
+  document.getElementById('scnxt').style.display='inline-flex';
+}
+
+// ══════════════════════
+// RESULTS
+// ══════════════════════
+function finish(){
+  const m=META[st.topic],qs=QS[st.topic],tot=qs.length+1,pct=Math.round((st.score/tot)*100);
+  const lvl=pct>=80?m.badge.lvl[2]:pct>=50?m.badge.lvl[1]:m.badge.lvl[0];
+  const col=pct>=80?'var(--gold)':pct>=50?'var(--teal)':'var(--purple)';
+  const qsc=st.score-(st.scOk?1:0),ssc=st.scOk?1:0;
+  const entry={name:st.player.name,email:st.player.email,team:st.player.team,topic:st.topic,topicLabel:st.topic==='ai'?'AI Ops':'RTR',score:st.score,total:tot,pct,badge:lvl,qsc,ssc,ts:new Date().toISOString(),id:Date.now()};
+  const all=JSON.parse(localStorage.getItem('pp_scores')||'[]');
+  localStorage.setItem('pp_scores',JSON.stringify([...all.filter(s=>!(s.email===entry.email&&s.topic===entry.topic)),entry]));
+  st.done[st.topic]=entry;
+  document.getElementById('ru').textContent=st.player.name.split(' ')[0];
+  document.getElementById('ri').textContent=m.badge.i;
+  document.getElementById('rb').textContent=`${m.badge.n} — ${lvl}`;document.getElementById('rb').style.color=col;
+  document.getElementById('rdesc').textContent=pct>=80?'Excellent. Ready to lead this conversation with clients.':pct>=50?'Good foundation. Re-read the cards to lock in the detail.':'Good first run — the explanations in the quiz carry the real learning.';
+  document.getElementById('rnum').textContent=st.score;document.getElementById('rnum').style.color=col;
+  document.getElementById('rden').textContent=`out of ${tot}`;
+  document.getElementById('rbr').innerHTML=`<div style="display:flex;justify-content:space-between;padding:6px 0"><span style="font-size:13px;color:var(--muted)">Quiz (${qs.length} questions)</span><span style="font-weight:700">${qsc}/${qs.length}</span></div><div class="div" style="margin:2px 0"></div><div style="display:flex;justify-content:space-between;padding:6px 0"><span style="font-size:13px;color:var(--muted)">Scenario</span><span style="font-weight:700">${ssc}/1</span></div><div class="div" style="margin:2px 0"></div><div style="display:flex;justify-content:space-between;padding:6px 0"><span style="font-size:14px;font-weight:700">Total</span><span style="font-size:15px;font-weight:900;color:${col}">${st.score}/${tot} · ${pct}%</span></div>`;
+  document.getElementById('rhook').textContent=m.hook;
+  toast('✓ Score saved');SS('s-res');
+}
+function goTopics(){updCards();SS('s-topics');}
+function goLB(){prevS=document.querySelector('.screen.active').id;renderLB();SS('s-lb');}
+
+// ══════════════════════
+// LEADERBOARD
+// ══════════════════════
+let lbF='all';
+function fLB(f){lbF=f;['all','ai','rtr'].forEach(x=>document.getElementById('lf-'+x).className='btn btn-sm '+(x===f?'btn-p':'btn-g'));renderLB();}
+function renderLB(){
+  const all=JSON.parse(localStorage.getItem('pp_scores')||'[]');
+  const list=lbF==='all'?all:all.filter(s=>s.topic===lbF);
+  const s=[...list].sort((a,b)=>b.pct-a.pct||b.score-a.score);
+  const el=document.getElementById('lblist'),em=document.getElementById('lbmt');
+  if(!s.length){el.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  const m=['🥇','🥈','🥉'];
+  el.innerHTML=s.map((r,i)=>`<div class="lbr"><div style="font-size:15px;width:22px;text-align:center;flex-shrink:0">${m[i]||(i+1)}</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text)">${r.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px">${r.team} · ${r.topicLabel} · <span style="color:var(--teal);font-weight:700">${r.badge}</span></div></div><div style="text-align:right"><div style="font-size:14px;font-weight:800;color:var(--teal)">${r.score}/${r.total}</div><div style="font-size:10px;color:var(--muted)">${r.pct}%</div></div></div>`).join('');
+}
+function SS(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
+</script>
+</body>
+</html>
